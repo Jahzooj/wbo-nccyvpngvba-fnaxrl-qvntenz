@@ -2,6 +2,7 @@ from fastapi import Depends
 
 from app.app import app
 from app.database import get_db
+from app.models import Application
 from app.config import logger
 
 @app.get('/status/', tags=['utility'])
@@ -10,8 +11,8 @@ async def status():
 
 @app.get("/status-db/", tags=['utility'])
 async def read_root(db = Depends(get_db)):
-    logger.info('hello world')
-    print('heyllo')
+    a = db.query(Application).first()
+    print(a.name)
     return {"message": "Hello World"}
 
 
@@ -28,5 +29,8 @@ async def submit_application():
     pass
 
 if __name__ == "__main__":
-    import hypercorn
-    hypercorn.run(app.main, host="0.0.0.0", port=8000)
+    # import hypercorn
+    # hypercorn.run(app.main, host="0.0.0.0", port=8000)
+
+    import uvicorn
+    uvicorn.run(app.main, host='0.0.0.0', port=8000)
