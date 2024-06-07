@@ -72,8 +72,9 @@ async def check_application(app_name: str, db: Session = Depends(get_db)):
 
 
 @app.get('/build-report-sankey/', tags=['visualization'])
-async def submit_application():
-    pass
+async def get_sankey_data(db: Session = Depends(get_db)):
+    applications = db.query(Application).filter(Application.is_active == True).order_by(Application.time_created).limit(1000).all()
+
 
 if __name__ == "__main__":
     # import hypercorn
