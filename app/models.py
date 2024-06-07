@@ -1,4 +1,3 @@
-from pydantic import BaseModel
 from sqlalchemy import Column, Boolean, Integer, String, JSON, DateTime
 from sqlalchemy.sql import func
 

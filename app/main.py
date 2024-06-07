@@ -1,4 +1,6 @@
 from fastapi import Depends, HTTPException
+from sqlalchemy.orm import Session
+from typing import List
 
 from app.app import app
 from app.database import get_db
@@ -12,7 +14,7 @@ async def status():
 
 
 @app.post('/submit-application/', tags=['application'])
-async def submit_application(submitted: ApplicationCreate, db=Depends(get_db)) -> ApplicationBase:
+async def submit_application(submitted: ApplicationCreate, db: Session = Depends(get_db)) -> ApplicationBase:
     try:
         data = submitted.dict()
     except ValueError as e:
@@ -25,9 +27,9 @@ async def submit_application(submitted: ApplicationCreate, db=Depends(get_db)) -
 
 
 @app.post('/update-application/{app_name}', tags=['application'])
-async def update_application(app_name: str, to_update: ApplicationCreate, db=Depends(get_db)) -> ApplicationBase:
+async def update_application(app_name: str, to_update: ApplicationCreate, db: Session = Depends(get_db)) -> ApplicationBase:
     try:
-        data = to_update.dict()
+        data = to_update.dict(exclude_unset=True)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=f'Invalid data: {e}')
     
@@ -35,10 +37,8 @@ async def update_application(app_name: str, to_update: ApplicationCreate, db=Dep
     if not submitted:
         raise HTTPException(status_code=404, detail=f'application not found')
 
-    update_data = to_update.dict(exclude_unset=True)
-
-    for key, value in update_data.items():
-        if update_data[key] != getattr(submitted, key):
+    for key, value in data.items():
+        if data[key] != getattr(submitted, key):
             setattr(submitted, key, value)
     db.commit()
     db.refresh(submitted)
@@ -47,7 +47,7 @@ async def update_application(app_name: str, to_update: ApplicationCreate, db=Dep
 
 
 @app.get('/check-application/{app_name}', tags=['application'])
-async def check_application(app_name: str, db=Depends(get_db)) -> ApplicationBase:
+async def check_application(app_name: str, db: Session = Depends(get_db)) -> ApplicationBase:
     application = db.query(Application).filter(Application.name == app_name).first()
     if not application:
         raise HTTPException(status=404, detail=f'application not found')
@@ -55,8 +55,14 @@ async def check_application(app_name: str, db=Depends(get_db)) -> ApplicationBas
     return ApplicationBase.from_orm(application)
 
 
+@app.get('/list-applications/', tags=['application'])
+async def list_application(db: Session = Depends(get_db)) -> List[str]:
+    applications = db.query(Application).order_by(Application.time_created, Application.time_updated).limit(10).all()
+    return [a.name for a in applications]
+
+
 @app.delete('/delete-application/{app_name}', tags=['application'])
-async def check_application(app_name: str, db=Depends(get_db)):
+async def check_application(app_name: str, db: Session = Depends(get_db)):
     application = db.query(Application).filter(Application.name == app_name).first()
     if not application:
         raise HTTPException(status_code=404, detail=f'application not found')

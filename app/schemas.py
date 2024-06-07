@@ -20,4 +20,4 @@ class ApplicationCreate(ApplicationBase):
     pass
 
 class ApplicationUpdate(ApplicationBase):
-    pass
+    passid: Optional[int]
