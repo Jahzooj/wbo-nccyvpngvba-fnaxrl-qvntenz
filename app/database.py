@@ -12,7 +12,7 @@ try:
     )
 
     with engine.connect() as conn:
-        conn.exectue(text("SELECT 1"))
+        conn.execute(text("SELECT 1"))
 except Exception as e:
     print(f'connection failed: {e}')
 
